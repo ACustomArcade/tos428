@@ -254,6 +254,17 @@ func (g *GRSDevice) SetStartupWay(way int) {
 	g.MakePermanent()
 }
 
+// SetWayForRom sets the way based on rom.
+func (g *GRSDevice) SetWayForRom(rom string) {
+	log.Printf("Checking ROM: %s", autoRom)
+
+	if funk.Contains(roms, filepath.Base(autoRom)) {
+		device.SetPosition(deviceRestrictor, 4)
+	} else {
+		device.SetPosition(deviceRestrictor, 8)
+	}
+}
+
 func (g *GRSDevice) Init() {
 	c := &serial.Config{Name: devicePath, Baud: 115200}
 	d, err := serial.OpenPort(c)
@@ -261,6 +272,42 @@ func (g *GRSDevice) Init() {
 		log.Fatal(err)
 	}
 	g.device = d
+}
+
+func findDevice() {
+	if devicePath == "auto" {
+		ttyDir := "/sys/class/tty"
+		files, err := os.ReadDir(ttyDir)
+		if err != nil {
+			log.Fatal(err)
+		}
+		for _, file := range files {
+			p, _ := filepath.EvalSymlinks(filepath.Join(ttyDir, file.Name()))
+			if strings.Contains(p, "usb") {
+				const productString = "PRODUCT=2341/8036/100"
+				ueventPath := filepath.Join(p, "..", "..", "uevent")
+				if _, err := os.Stat(ueventPath); err == nil {
+					body, _ := os.ReadFile(ueventPath)
+					if strings.Contains(string(body), productString) {
+						devicePath = filepath.Join("/dev", file.Name())
+						log.Printf("Found tos428: %s\n", devicePath)
+					}
+				}
+			}
+		}
+	}
+}
+
+func initRomList() {
+	if romListPath == "" {
+		readRomList(romsData)
+	} else {
+		data, err := os.ReadFile(romListPath)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		readRomList(data)
+	}
 }
 
 func init() {
@@ -273,6 +320,9 @@ func init() {
 	flag.BoolVar(&getInfo, "info", false, "display device info")
 	flag.IntVar(&setWay, "way", 0, "way to set the restrictor (4 or 8)")
 	flag.Parse()
+
+	findDevice()
+	initRomList()
 }
 
 func isValidColor(color int) bool {
@@ -330,28 +380,6 @@ func main() {
 		return
 	}
 
-	if devicePath == "auto" {
-		ttyDir := "/sys/class/tty"
-		files, err := os.ReadDir(ttyDir)
-		if err != nil {
-			log.Fatal(err)
-		}
-		for _, file := range files {
-			p, _ := filepath.EvalSymlinks(filepath.Join(ttyDir, file.Name()))
-			if strings.Contains(p, "usb") {
-				const productString = "PRODUCT=2341/8036/100"
-				ueventPath := filepath.Join(p, "..", "..", "uevent")
-				if _, err := os.Stat(ueventPath); err == nil {
-					body, _ := os.ReadFile(ueventPath)
-					if strings.Contains(string(body), productString) {
-						devicePath = filepath.Join("/dev", file.Name())
-						log.Printf("Found tos428: %s\n", devicePath)
-					}
-				}
-			}
-		}
-	}
-
 	device := new(GRSDevice)
 	device.Init()
 
@@ -377,20 +405,7 @@ func main() {
 	}
 
 	if autoRom != "" {
-		log.Printf("Checking ROM: %s", autoRom)
-		if romListPath == "" {
-			readRomList(romsData)
-		} else {
-			data, err := os.ReadFile(romListPath)
-			if err != nil {
-				log.Fatalln(err)
-			}
-			readRomList(data)
-		}
-		if funk.Contains(roms, filepath.Base(autoRom)) {
-			device.SetPosition(deviceRestrictor, 4)
-		} else {
-			device.SetPosition(deviceRestrictor, 8)
-		}
+		device.SetWayForRom(autoRom)
+		return
 	}
 }
