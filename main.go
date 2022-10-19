@@ -259,9 +259,9 @@ func (g *GRSDevice) SetWayForRom(rom string) {
 	log.Printf("Checking ROM: %s", autoRom)
 
 	if funk.Contains(roms, filepath.Base(autoRom)) {
-		device.SetPosition(deviceRestrictor, 4)
+		g.SetPosition(deviceRestrictor, 4)
 	} else {
-		device.SetPosition(deviceRestrictor, 8)
+		g.SetPosition(deviceRestrictor, 8)
 	}
 }
 
