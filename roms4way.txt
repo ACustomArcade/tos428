@@ -38,6 +38,8 @@ armorar.zip
 armorcar.zip
 armorcar2.zip
 ashnojoe.zip
+assault.zip
+assaultp.zip
 astrians.zip
 abattle.zip
 abattle2.zip
