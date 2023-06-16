@@ -25,6 +25,7 @@ var devicePath string
 var deviceRestrictor string
 var exportFile string
 var getInfo bool
+var mergeListPath string
 var rawComand string
 var romListPath string
 var roms []string
@@ -221,6 +222,8 @@ func (g *GRSDevice) SetPosition(restrictor string, way int) {
 	if r != "ok" {
 		log.Fatalf("ERROR: \"%q\"\n", r)
 	}
+
+	log.Printf("Command completed successfully")
 }
 
 // SetSilent configures behavior of servos when not in motion. If silent is on,
@@ -308,12 +311,21 @@ func initRomList() {
 		}
 		readRomList(data)
 	}
+
+	if mergeListPath != "" {
+		data, err := os.ReadFile(mergeListPath)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		readRomList(data)
+	}
 }
 
 func init() {
 	flag.StringVar(&autoRom, "rom", "", "auto-detect the way for the specified rom")
 	flag.StringVar(&exportFile, "exportromlist", "", "exports the built-in 4-way rom list to specified path")
 	flag.StringVar(&romListPath, "romlist", "", "file containing list of 4-way roms. Defaults to built-in list.")
+	flag.StringVar(&mergeListPath, "mergelist", "", "file containing list of 4-way roms to merge with built-in list.")
 	flag.StringVar(&devicePath, "d", "auto", "path to tos428 device. Set to auto to scan for device. On Windows use COM#")
 	flag.StringVar(&deviceRestrictor, "r", "all", "restrictor to apply setting to")
 	flag.StringVar(&rawComand, "raw", "", "raw command to send to the device. Used to support features not currently implemented.")
