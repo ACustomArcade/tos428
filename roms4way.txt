@@ -605,6 +605,7 @@ knockout.zip
 knockoutb.zip
 knockoutc.zip
 komocomo.zip
+ladybug.zip
 pingpong.zip
 korosuke.zip
 kosmokil.zip
